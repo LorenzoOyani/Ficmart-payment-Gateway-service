@@ -6,16 +6,15 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.concurrent.Callable;
 
 @RestController
 @RequestMapping("/paymentAuthorization/v1")
 public class PaymentController {
 
-//    private final PaymentService paymentService;
 
-    @PostMapping
-    public ResponseEntity<PaymentResponse> createPayment(@RequestHeader("idempotency-key") String idempotencyKey,@Valid @RequestBody AuthorizeRequest authorizeRequest){
+
+    @PostMapping("/authorize-payment")
+    public ResponseEntity<?> authorizePayment(@RequestHeader("idempotency-key") String idempotencyKey, @Valid @RequestBody AuthorizeRequest authorizeRequest){
 
         
         PaymentResponse paymentResponse = new PaymentResponse();

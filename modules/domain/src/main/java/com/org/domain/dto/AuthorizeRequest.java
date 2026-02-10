@@ -4,13 +4,8 @@ public record AuthorizeRequest(
         String order_id,
         String customer_id,
         long amount_cents,
-        String currency,
-        Card card
+        String currency
 ) {
-    public record Card(
-            String number,
-            String cvv,
-            String expiry
-    ) {
+
     }
-}
+

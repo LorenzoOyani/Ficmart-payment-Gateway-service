@@ -29,6 +29,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Application dependency -->
+        <dependency>
+            <groupId>com.org</groupId>
+            <artifactId>application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- JPA + validation -->
         <dependency>

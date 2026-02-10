@@ -1,7 +1,9 @@
+version: "3.9"
+
 services:
   postgres:
     image: postgres:14
-    container_name: postgres
+    container_name: ficmart-postgres
     env_file:
       - .env
     environment:
@@ -18,6 +20,21 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: ficmart-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - microservices-network
     restart: unless-stopped

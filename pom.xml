@@ -30,10 +30,9 @@
         <module>app/gateway</module>
         <module>modules/domain</module>
         <module>modules/persistence</module>
-        <!-- later:
-        <module>service/bank-mock</module>
-        <module>libs/common</module>
-        -->
+        <module>modules/application</module>
+        <module>modules/infrastructure</module>
+
     </modules>
 
     <!-- Import Spring Boot dependency versions for all modules -->
