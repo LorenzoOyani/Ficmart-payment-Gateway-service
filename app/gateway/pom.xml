@@ -32,23 +32,21 @@
 
 <!--        <dependency>-->
 <!--            <groupId>com.ficmart</groupId>-->
-<!--            <artifactId></artifactId>-->
+<!--            <artifactId>persistence</artifactId>-->
 <!--            <version>0.0.1-SNAPSHOT</version>-->
+<!--            <scope>compile</scope>-->
 <!--        </dependency>-->
 
-
-<!--        <dependency>-->
-<!--            <groupId>com.org</groupId>-->
-<!--            <artifactId></artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
-
-
-<!--        <dependency>-->
-<!--            <groupId>com.ficmart</groupId>-->
-<!--            <artifactId>payments-domain</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.org</groupId>
+            <artifactId>application</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.org</groupId>
+            <artifactId>infrastructure</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
 
 
         <!-- Optional: validation for request DTOs -->

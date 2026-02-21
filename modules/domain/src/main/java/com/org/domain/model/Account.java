@@ -15,15 +15,29 @@ public class Account {
 
     private String accountNumber;
 
-    private String cvv;
-
-    private int expiryMonth;
-
     private long balanceCents;
 
     private Timestamp createdAt;
 
     private Timestamp updatedAt;
 
+    public void debit(long amount) {
+        if (amount <= 0) {
+            throw new IllegalStateException("Amount must be positive");
+
+        }
+        if(balanceCents > amount) {
+
+            balanceCents -= amount;
+        }
+
+    }
+
+    public void credit(long amount) {
+        if (amount <= 0) {
+            throw new IllegalStateException("Amount must be positive");
+        }
+        balanceCents += amount;
+    }
 
 }

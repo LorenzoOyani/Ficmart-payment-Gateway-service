@@ -1,8 +1,6 @@
 package com.org.domain.dto;
 
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 public class IdempotencyKey {
     protected String idem_key;
 
