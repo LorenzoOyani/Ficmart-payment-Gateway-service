@@ -1,13 +1,14 @@
 package com.org.application.mapper;
 
-import com.org.domain.model.Payment;
-import com.org.persistence.entities.PaymentEntity;
+import com.org.persistence.entities.Payment;
 import org.mapstruct.Mapper;
+import org.springframework.stereotype.Component;
 
 @Mapper
+@Component
 public interface PaymentMapper {
 
-    PaymentEntity toPaymentEntity(Payment payment);
+    Payment toPaymentEntity(com.org.domain.model.Payment payment);
 
-    Payment toPayment(PaymentEntity paymentEntity);
+    com.org.domain.model.Payment toPayment(Payment payment);
 }

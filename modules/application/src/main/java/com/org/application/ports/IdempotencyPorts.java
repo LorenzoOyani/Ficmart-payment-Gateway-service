@@ -7,5 +7,4 @@ import java.util.Optional;
 public interface IdempotencyPorts {
 
 
-    Optional<IdemKeyResponse> findIdemKey(String idemKey, String endpoint);
 }

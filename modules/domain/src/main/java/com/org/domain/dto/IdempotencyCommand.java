@@ -11,7 +11,6 @@ public record IdempotencyCommand(
         String merchantId
 )
 {
-
     public IdempotencyCommand {
         Objects.requireNonNull(Operation, "Operation");
         Objects.requireNonNull(requestHash, "requestHash");

@@ -1,7 +1,7 @@
-package com.org.application.ports;
+package com.org.application.dto;
 
 public record ProviderCaptureCommand(
-        String providerAuthId,   // bank authId
+        String providerAuthId,
         String orderId,
         String customerId,
         long amountCents,

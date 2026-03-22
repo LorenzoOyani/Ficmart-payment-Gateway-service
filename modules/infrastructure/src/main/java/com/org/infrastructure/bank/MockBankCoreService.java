@@ -50,7 +50,7 @@ public class MockBankCoreService {
 
         final String AUTH_ID = "auth_" + UUID.randomUUID();
 
-        Account accountModel = accountMapper.AccountEntityMapper(account);
+        var accountModel = accountMapper.AccountEntityMapper(account);
 
 
         try {
@@ -58,7 +58,7 @@ public class MockBankCoreService {
             if (accountModel.getBalanceCents() < cmd.amount()) {
                 new BankAuthorizeResult(false, null, "INSUFFICIENT_FUNDS");
             }
-            BankAuthorization bankAuthorization = BankAuthorization.authorize(
+            BankAuthorization bankAuthorization = BankAuthorization.markedAuthorize(
                     AUTH_ID,
                     cmd.orderId(),
                     cmd.customerId(),

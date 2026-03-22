@@ -1,4 +1,4 @@
-package com.org.application.ports;
+package com.org.application.dto;
 
 public record ProviderVoidCommand(
         String providerAuthId,

@@ -4,5 +4,12 @@ public record AuthorizePaymentCommand(
         String orderId,
         String customerId,
         long amount,
-        IdempotencyKey idempotencyKey) {
+        IdempotencyKey idempotencyKey,
+        String cvv,
+        String cardNumber,
+        int expiryMonth,
+        int expiryYear
+
+
+) {
 }

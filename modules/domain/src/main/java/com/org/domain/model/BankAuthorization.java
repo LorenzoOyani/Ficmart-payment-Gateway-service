@@ -9,9 +9,6 @@ import java.util.UUID;
 
 @Getter
 public class BankAuthorization {
-
-//    public enum state {AUTHORIZED, CAPTURED, VOID}
-
     private UUID id;
 
     private String authId;
@@ -25,7 +22,7 @@ public class BankAuthorization {
     private long amountCents;
 
 
-    public static BankAuthorization authorize(String authId, String orderId, String customerId, long amountCents) {
+    public static BankAuthorization markedAuthorize(String authId, String orderId, String customerId, long amountCents) {
         BankAuthorization bankAuthorization = new BankAuthorization();
         bankAuthorization.authId = authId;
         bankAuthorization.orderId = orderId;
@@ -36,7 +33,7 @@ public class BankAuthorization {
         return bankAuthorization;
     }
 
-    public static BankAuthorization capture(String authId, BankAuthorizationCmd cmd) {
+    public static BankAuthorization markedCaptured(String authId, BankAuthorizationCmd cmd) {
         BankAuthorization bankAuthorization = new BankAuthorization();
         bankAuthorization.authId = authId;
         bankAuthorization.orderId = cmd.orderId();

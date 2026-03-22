@@ -1,10 +1,11 @@
 package com.org.application.ports;
 
 
+import com.org.application.dto.*;
 
 public interface PaymentProvider {
 
-    ProviderAuthorizeResponse authorize(PaymentProviderAuthorizeCmd paymentAuthorizeCmd);
+    AuthorizeResponse authorize(PaymentProviderAuthorizeCmd paymentAuthorizeCmd);
 
     ProviderCaptureResult capture(ProviderCaptureCommand cmd);
 

@@ -18,10 +18,6 @@ public class TransactionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-//    @JoinColumn(name = "account_id")
-//    private AccountEntity account;
-
     @Column(name = "transactioonId", nullable = false, unique = true)
     private String transactionId;
 

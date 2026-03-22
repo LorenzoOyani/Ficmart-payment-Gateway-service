@@ -1,4 +1,4 @@
-package com.org.application.ports;
+package com.org.application.dto;
 
 import com.org.domain.dto.IdempotencyKey;
 

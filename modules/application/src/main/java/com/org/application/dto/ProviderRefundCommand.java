@@ -1,7 +1,7 @@
-package com.org.application.ports;
+package com.org.application.dto;
 
 public record ProviderRefundCommand(
-        String providerAuthId,   // refund by authId (full refund assumption)
+        String providerAuthId,
         String orderId,
         String customerId,
         long amountCents,

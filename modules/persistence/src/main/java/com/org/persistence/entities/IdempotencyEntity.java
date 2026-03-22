@@ -29,6 +29,8 @@ public class IdempotencyEntity {
     @Column(name = "request_hash")
     private String requestHash;
 
+    @Column(name= "merchant_id", nullable = false)
+    private String merchantId;
 
     @Column(name = "operation")
     private String operation;
@@ -47,6 +49,12 @@ public class IdempotencyEntity {
     @Column(name = "expired_at", nullable = false)
     private Instant expiresAt;
 
+    @Column(name="updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @Column(name = "locked_at",  nullable = false)
+    private Instant locked_at;
+
     @PrePersist
     public void prePersist() {
         createdAt = Instant.now();
@@ -55,12 +63,6 @@ public class IdempotencyEntity {
 
     @PreUpdate
     public void preUpdate() {
-        expiresAt = Instant.now();
+        updatedAt = Instant.now();
     }
-
-
-
-
-
-
 }
