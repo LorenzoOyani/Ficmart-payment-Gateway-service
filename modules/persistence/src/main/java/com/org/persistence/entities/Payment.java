@@ -28,12 +28,6 @@ public class Payment {
 
     private String currency;
     private String authorizationReference;
-
-    private String bankAuthId;
-    private String bankCaptureId;
-    private String bankVoidId;
-    private String bankRefundId;
-
     private Instant createdAt;
     private Instant updatedAt;
     private Instant authorizedAt;
@@ -70,14 +64,8 @@ public class Payment {
     public Payment() {}
 
     public Payment newPending(UUID id,String merchantId,String orderId, String customerId, long amount, String currency , Instant timestamp) {
-        return new Payment(
-                id,
-                merchantId,
-                orderId,
 
-
-        );
-
+return  null;
     }
 
     public void markedAuthorized(){

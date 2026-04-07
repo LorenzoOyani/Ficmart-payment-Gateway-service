@@ -2,6 +2,7 @@ package com.org.infrastructure.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.org.application.dto.AuthorizeResponse;
 import com.org.domain.dto.IdempotencyCommand;
 import com.org.domain.dto.PaymentResponse;
 import com.org.domain.enums.IdempotencyStatus;
@@ -56,10 +57,11 @@ public class IdempotencyServiceImpl<T> implements IdempotencyService<T> {
 
     @SuppressWarnings("unchecked assignment")
     @Override
-    public IdempotencyState<T> begin(IdempotencyCommand command, Class<T> clazzType) throws IdempotencyIdentityConflictException {
+    public IdempotencyState<AuthorizeResponse> begin(IdempotencyCommand command, Class<AuthorizeResponse> clazzType) throws IdempotencyIdentityConflictException {
         String lockKey = buildLockKey(command);
         RLock lock = redissonClient.getLock(lockKey);
         boolean locked = false;
+
 
         try {
             locked = lock.tryLock(
@@ -68,82 +70,82 @@ public class IdempotencyServiceImpl<T> implements IdempotencyService<T> {
                     TimeUnit.MINUTES
 
             );
-
             if (!locked) {
                 return IdempotencyState.inProgress();
             }
 
-            return transactionTemplate.execute(result -> {
-
-
-                var existingRecord = idempotencyRepository.findByIdempotencyKeyAndOperation(
+            return transactionTemplate.execute(status ->{
+                Optional<IdempotencyEntity> existingRec = idempotencyRepository.findByIdempotencyKeyAndOperation(
                         command.merchantId(),
-                        command.Operation(),
-                        command.requestHash()
+                        command.requestHash(),
+                        command.Operation()
                 );
 
-                IdempotencyEntity record;
-                IdempotencyRecord r = null;
+                if (existingRec.isPresent()) {
+                    var record = existingRec.get();
 
-                if (existingRecord.isPresent()) {
-                    record = existingRecord.get();
-                    r = idempotencyMapper.IdempotencyRecordMapper(record);
-                    if (!Objects.equals(r.requestHash(), command.requestHash())) {
-                        LOGGER.error("");
+                    var recordDto = idempotencyMapper.IdempotencyRecordMapper(record);
+
+                    validateRequestHash(recordDto, command);
+
+                    if (recordDto.status() == IdempotencyStatus.COMPLETED ||
+                            recordDto.status() == IdempotencyStatus.FAILED) {
+                        T response = deserialize(recordDto.responseBody(), (Class<T>) clazzType);
+
+                        return IdempotencyState.replay((PaymentResponse) response);
+
                     }
+                    if (isStale(recordDto)){
+                        recordDto.markedFailed(
+                                409,
+                                "{\"error\":\"Stale in-progress idempotency record detected\"}"
 
-                    if (r.status() == IdempotencyStatus.COMPLETED || record.getIdempotencyStatus() == IdempotencyStatus.FAILED) {
-                        T replayResponse = deserialize(record.getResponseBodyJson(), clazzType);
-                        return IdempotencyState.replay((PaymentResponse) replayResponse);
-
-                    }
-
-                    if (isStale(r)) {
-                        r.markedFailed(
-                                500, "staled data 'in-progress' detected , replaying response"
                         );
-                        idempotencyRepository.save(record); /// save the failed in-progress record to DB for future consistency
+                        var entity = idempotencyMapper.IdempotencyEntityMapper(recordDto);
+                        idempotencyRepository.save(entity);
+
                         return IdempotencyState.inProgress();
                     }
+                    return IdempotencyState.inProgress();
 
+                }
+
+                IdempotencyRecord record = IdempotencyRecord.inProgress(
+                        command.merchantId(),
+                        command.key(),
+                        command.requestHash(),
+                        command.Operation()
+                );
+
+                var entity = idempotencyMapper.IdempotencyEntityMapper(record);
+
+                try{
+                    idempotencyRepository.save(entity);
+                }catch (DataIntegrityViolationException ex){
                     return IdempotencyState.inProgress();
                 }
 
-                if (r != null) {
-
-                    var created = r.inProgress(
-                            command.merchantId(),
-                            command.key(),
-                            command.requestHash(),
-                            command.Operation()
-
-                    );
-
-                    record = idempotencyMapper.IdempotencyEntityMapper(created);
-
-                    try {
-                        idempotencyRepository.save(record);
-                    } catch (DataIntegrityViolationException e) {
-                        LOGGER.error(e.getMessage());
-                    }
-                }
-                return IdempotencyState.inProgress();
+                return IdempotencyState.acquired();
             });
-        } catch (InterruptedException e){
-            Thread.currentThread().interrupt();
-            LOGGER.error(e.getMessage());
-            throw new IllegalArgumentException("");
+        } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("problem acquiring lock key");
         }finally {
-            if(locked && lock.isHeldByCurrentThread()){
+            if (locked && lock.isHeldByCurrentThread()){
                 lock.unlock();
             }
         }
-
-
     }
 
+    private void validateRequestHash(IdempotencyRecord record, IdempotencyCommand command) {
+        if (!Objects.equals(record.requestHash(), command.requestHash())) {
+            throw new IllegalArgumentException("request hash does not match");
+        }
+    }
+
+
     @Override
-    public void complete(IdempotencyCommand command, T response) {
+    public void complete(IdempotencyCommand command, AuthorizeResponse response) {
             transactionTemplate.executeWithoutResult(result -> {
                 Optional<IdempotencyEntity> idempotencyEntity = Optional.ofNullable(idempotencyRepository.findByIdempotencyKeyAndOperation(
                         command.merchantId(),
@@ -151,20 +153,22 @@ public class IdempotencyServiceImpl<T> implements IdempotencyService<T> {
                         command.key()
                 ).orElseThrow(() -> new DataIntegrityViolationException("IDEMPOTENCY RECORDS NOT FOUND")));
 
-                if(idempotencyEntity.isPresent()) {
-                    IdempotencyEntity recordEntity = idempotencyEntity.get();
-                    IdempotencyRecord r = idempotencyMapper.IdempotencyRecordMapper(recordEntity);
 
+                    if(idempotencyEntity.isPresent()) {
+                        IdempotencyEntity recordEntity = idempotencyEntity.get();
+                        IdempotencyRecord r = idempotencyMapper.IdempotencyRecordMapper(recordEntity);
 
-                    r.markCompleted(200, serialize(response));
-                }
+                        validateRequestHash(r, command);
+                        r.markCompleted(200, serialize((T) response));
 
+                        idempotencyRepository.save(recordEntity);
+                    }
             });
 
     }
 
     @Override
-    public void fail(IdempotencyCommand command, T response) {
+    public void fail(IdempotencyCommand command, AuthorizeResponse response) {
         transactionTemplate.executeWithoutResult(result ->{
             Optional<IdempotencyEntity> idempotencyEntity = Optional.ofNullable(idempotencyRepository.findByIdempotencyKeyAndOperation(
                     command.merchantId(),
@@ -177,7 +181,10 @@ public class IdempotencyServiceImpl<T> implements IdempotencyService<T> {
                 IdempotencyRecord r = idempotencyMapper.IdempotencyRecordMapper(recordEntity);
 
 
-                r.markedFailed(200, serialize(response));
+
+
+                r.markedFailed(200, serialize((T) response));
+                idempotencyRepository.save(recordEntity);
             }
 
         });
@@ -201,8 +208,6 @@ public class IdempotencyServiceImpl<T> implements IdempotencyService<T> {
     private String serialize(T response) {
         try{
             return objectMapper.writeValueAsString(response);
-
-
         }catch (JsonProcessingException e){
             LOGGER.error(e.getMessage());
             throw new IllegalStateException("failed to serialize response");

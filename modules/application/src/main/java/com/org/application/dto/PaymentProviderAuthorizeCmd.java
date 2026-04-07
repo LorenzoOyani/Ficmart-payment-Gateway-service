@@ -9,7 +9,7 @@ public record PaymentProviderAuthorizeCmd(
         String customerId,
         long amount_cent,
         String currency,
-        IdempotencyKey idempotencyKey,
+        String idempotencyKey,
         Map<String, Object> metadata
 
         ) {
