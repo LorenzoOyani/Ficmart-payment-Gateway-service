@@ -3,6 +3,7 @@ package com.org.application.ports;
 
 import com.org.application.dto.*;
 import com.org.domain.dto.PaymentAuthorizeResponse;
+import com.org.domain.dto.VoidResult;
 
 public interface PaymentProvider {
 
@@ -10,7 +11,7 @@ public interface PaymentProvider {
 
     ProviderCaptureResult capture(ProviderCaptureCommand cmd);
 
-    ProviderVoidResult voidAuth(ProviderVoidCommand cmd);
+    VoidResult voidAuth(ProviderVoidCommand cmd);
 
     ProviderRefundResult refund(ProviderRefundCommand cmd);
 

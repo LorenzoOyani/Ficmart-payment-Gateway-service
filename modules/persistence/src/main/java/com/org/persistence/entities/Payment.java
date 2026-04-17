@@ -27,9 +27,21 @@ public class Payment {
     private long amount;
 
     private String currency;
+
     private String authorizationReference;
+
     private Instant createdAt;
+
     private Instant updatedAt;
+
+    private String providerTransactionId;
+    private String stripePaymentIntentId;
+    private String stripeLatestEventId;
+
+    private String failureCode;
+    private String failureMessage;
+
+
     private Instant authorizedAt;
     private Instant capturedAt;
     private Instant voidedAt;
@@ -75,14 +87,15 @@ return  null;
     }
 
     private void requireStatus(PaymentStatus expectedStatus) {
-        if (expectedStatus != paymentStatus) {
+        if (expectedStatus != PaymentStatus.AUTHORIZED) {
             throw new PaymentStatusException("unknown payment state!");
         }
     }
 
-    public void markAuthorized(String authorizationReference, Instant authorizedAt, Instant expiresAt) {
-        requireStatus(PaymentStatus.AUTHORIZING);
+    public void markAuthorized(String authorizationReference,String stripePaymentIntentId, Instant authorizedAt, Instant expiresAt) {
+        requireStatus(paymentStatus);
         this.authorizedAt = authorizedAt;
+        this.stripePaymentIntentId = stripePaymentIntentId;
         this.expiresAt = expiresAt;
         this.paymentStatus = PaymentStatus.AUTHORIZED;
         this.authorizationReference = authorizationReference;

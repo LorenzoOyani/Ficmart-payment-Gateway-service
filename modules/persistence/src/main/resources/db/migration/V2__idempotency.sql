@@ -1,4 +1,4 @@
-CREATE TABLE idempotency_records
+CREATE TABLE idempotency_table
 (
     id              BIGINT PRIMARY KEY    DEFAULT gen_random_uuid(),
     operation       VARCHAR(64)  NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE idempotency_records
 );
 
 CREATE UNIQUE INDEX ux_idem_operation_key
-    ON idempotency_records (idempotency_key);
+    ON idempotency_table (idempotency_key);
 
 CREATE INDEX idx_idem_expires_at
-    ON idempotency_records (expires_at);
+    ON idempotency_table (expires_at);

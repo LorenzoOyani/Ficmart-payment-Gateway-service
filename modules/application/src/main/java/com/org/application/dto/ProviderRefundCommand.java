@@ -4,7 +4,7 @@ public record ProviderRefundCommand(
         String providerAuthId,
         String orderId,
         String customerId,
-        long amountCents,
+        Long amountCents,
         String currency,
         String idempotencyKey
 ) {}

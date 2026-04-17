@@ -29,6 +29,9 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/com.stripe/stripe-java -->
+
+
 
 <!--        <dependency>-->
 <!--            <groupId>com.ficmart</groupId>-->

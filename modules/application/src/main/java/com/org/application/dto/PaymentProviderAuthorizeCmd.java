@@ -2,6 +2,7 @@ package com.org.application.dto;
 
 import com.org.domain.dto.IdempotencyKey;
 
+import java.time.Instant;
 import java.util.Map;
 
 public record PaymentProviderAuthorizeCmd(
@@ -10,7 +11,8 @@ public record PaymentProviderAuthorizeCmd(
         long amount_cent,
         String currency,
         String idempotencyKey,
-        Map<String, Object> metadata
+        Map<String, String> metadata,
+        Instant instant
 
         ) {
 

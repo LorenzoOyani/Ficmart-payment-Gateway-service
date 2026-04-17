@@ -6,5 +6,6 @@ public record ProviderCaptureCommand(
         String customerId,
         long amountCents,
         String currency,
+        String authorizationReference,
         String idempotencyKey
 ) {}

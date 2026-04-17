@@ -100,7 +100,8 @@ public class GatewayAuthorizationService {
                                             request.amount_cents(),
                                             request.currency(),
                                             idempotencyKey,
-                                            Map.of("payment", "stripe-pay")
+                                            Map.of("payment", "stripe-pay"),
+                                            Instant.now()
                                     )
                             )
 
@@ -118,6 +119,7 @@ public class GatewayAuthorizationService {
 
                 p.markAuthorized(
                         response.providerTxnId(),
+                        response.externalTxnId(),
                         response.createdAt() != null? response.createdAt() : Instant.now(),
                         response.expiresAt() != null? response.expiresAt() :
                                 Instant.now().plus(7, ChronoUnit.DAYS)
