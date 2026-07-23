@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
-public class GatewayAuthorizationService {
+public class GatewayAuthorizationService{
 
     private static final String operation = "PAYMENT_AUTHORIZE";
     private static final String CURRENCY = "USD";
@@ -33,7 +33,7 @@ public class GatewayAuthorizationService {
 
     private final PaymentProvider paymentProvider;
     private final TransactionTemplate transactionTemplate;
-    private final IdempotencyService<?> idempotencyService;
+    private final IdempotencyService idempotencyService;
     private final PaymentMapper paymentMapper;
     private final PaymentRepository paymentRepository;
 
@@ -58,18 +58,18 @@ public class GatewayAuthorizationService {
                 idempotencyKey
         );
 
-            IdempotencyState<AuthorizeResponse> idempotencyState = idempotencyService.begin(idempotencyCommand, AuthorizeResponse.class);
+            IdempotencyState idempotencyState = idempotencyService.begin(idempotencyCommand);
 
             ///  this check ensures system consistency under a potential payment de-duplication
             if (idempotencyState.isReplay()) { ///  to get a replay, the transaction must either be... Completed or a total failure
-                return idempotencyState.getPaymentResponse();
+                return (AuthorizeResponse) idempotencyState.getPaymentResponse();
             }
 
             if (idempotencyState.isInProgress()) {
                 return new AuthorizeResponse(
                         "X-providerId",
                         "...in progress",
-                        "Another authorization request with this idempotency key is already in progress"
+                        "Authorization request with this idempotency key is already in progress"
                 );
             }
                 com.org.persistence.entities.Payment payment = transactionTemplate.execute(status -> {
@@ -77,9 +77,10 @@ public class GatewayAuthorizationService {
 
                             request.customer_id(),
                             request.order_id(),
+                            merchantId,
                             request.amount_cents(),
-                            request.currency(),
-                            merchantId
+                            request.currency()
+
                     );
                     com.org.persistence.entities.Payment paymentDb = paymentMapper.toPaymentEntity(payments);
 

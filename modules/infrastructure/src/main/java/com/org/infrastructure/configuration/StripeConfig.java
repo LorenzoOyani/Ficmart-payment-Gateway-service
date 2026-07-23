@@ -25,3 +25,4 @@ public class StripeConfig {
         Stripe.apiKey = properties.secretKey();
     }
 }
+

@@ -24,6 +24,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     List<Payment> findStuckPaymentForUpdate(@Param("statuses") List<String> status, Instant threshold);
 
     Optional<Payment> findByStripePaymentIntentId(String stripePaymentIntentId);
-//    Optional<Payment> findByStripePaymentIntentId(String stripePaymentIntentId);
-Optional<Payment> findByStripePaymentIntentIdForUpdate(String stripePaymentIntentId);
+    Optional<Payment> findByStripePaymentIntentIdForUpdate(String stripePaymentIntentId);
 }

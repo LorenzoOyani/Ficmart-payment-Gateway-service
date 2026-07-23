@@ -1,30 +1,29 @@
 package com.org.domain.model;
 
-import com.org.domain.dto.PaymentResponse;
 import lombok.Getter;
 
 @Getter
-public class IdempotencyState<T> {
+public class IdempotencyState {
     private final boolean replay;
     private final boolean inProgress;
-   private final T paymentResponse;
+   private final Object paymentResponse;
 
-    public IdempotencyState(boolean replay, boolean inProgress, T paymentResponse) {
+    public IdempotencyState(boolean replay, boolean inProgress, Object paymentResponse) {
         this.replay = replay;
         this.inProgress = inProgress;
         this.paymentResponse = paymentResponse;
     }
 
 
-    public static IdempotencyState replay(PaymentResponse paymentResponse) {
-        return new IdempotencyState<>(true, false, paymentResponse);
+    public static IdempotencyState replay(Object paymentResponse) {
+        return new IdempotencyState(true, false, paymentResponse);
     }
 
     public static IdempotencyState inProgress() {
         return new IdempotencyState(true, true, null);
     }
 
-    public IdempotencyState<T> complete() {
+    public IdempotencyState complete() {
         return new IdempotencyState(false, true, paymentResponse);
     }
 
