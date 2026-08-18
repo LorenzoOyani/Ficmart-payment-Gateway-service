@@ -31,8 +31,6 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEventEntity, 
             @Param("status") OutboxEventStatus status
     );
 
-    @Query("""
-    select
-""")
+
     List<OutboxEventEntity>findRetryableEvents(Pageable pageable);
 }

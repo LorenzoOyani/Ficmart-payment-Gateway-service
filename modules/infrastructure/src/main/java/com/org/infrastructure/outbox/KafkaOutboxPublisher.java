@@ -34,8 +34,8 @@ public class KafkaOutboxPublisher {
         for (OutboxEventEntity event : events) {
 
             publish(event);
+            event.markPublished();
         }
-
     }
 
     public void publish(OutboxEventEntity events) {

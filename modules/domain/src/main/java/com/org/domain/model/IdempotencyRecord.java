@@ -151,8 +151,8 @@ public final class IdempotencyRecord {
                 Objects.equals(this.idempotencyKey, that.idempotencyKey) &&
                 Objects.equals(this.requestHash, that.requestHash) &&
                 Objects.equals(this.status, that.status) &&
-                Objects.equals(this.responseCode, that.responseCode) &&
-                Objects.equals(this.responseBody, that.responseBody) &&
+//                Objects.equals(this.responseCode, that.responseCode) &&
+//                Objects.equals(this.responseBody, that.responseBody) &&
                 Objects.equals(this.lockedAt, that.lockedAt) &&
                 Objects.equals(this.completedAt, that.completedAt) &&
                 Objects.equals(this.createdAt, that.createdAt);

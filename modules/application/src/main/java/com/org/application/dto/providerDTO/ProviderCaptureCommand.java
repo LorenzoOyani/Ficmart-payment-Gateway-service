@@ -1,4 +1,4 @@
-package com.org.application.dto;
+package com.org.application.dto.providerDTO;
 
 public record ProviderCaptureCommand(
         String providerAuthId,

@@ -1,18 +1,32 @@
 CREATE TABLE idempotency_table
 (
-    id              BIGINT PRIMARY KEY    DEFAULT gen_random_uuid(),
-    operation       VARCHAR(64)  NOT NULL,
-    idempotency_key VARCHAR(128) NOT NULL,
-    request_hash    VARCHAR(128) NOT NULL,
-    status          VARCHAR(20)  NOT NULL,
-    response_body   JSONB,
-    created_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    expires_at      TIMESTAMP
+    idempotency_key    VARCHAR(255) PRIMARY KEY,
+
+    endpoint           VARCHAR(255) NOT NULL,
+    request_hash       VARCHAR(128) NOT NULL,
+    merchant_id        VARCHAR(100) NOT NULL,
+    operation          VARCHAR(80)  NOT NULL,
+
+    response_body      TEXT,
+
+    idempotency_status VARCHAR(40)  NOT NULL,
+
+    created_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    expired_at         TIMESTAMPTZ  NOT NULL,
+    updated_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    locked_at          TIMESTAMPTZ,
+
+    CONSTRAINT uq_idem UNIQUE (idempotency_key, endpoint)
 );
 
-CREATE UNIQUE INDEX ux_idem_operation_key
+CREATE INDEX idx_idempotency_key
     ON idempotency_table (idempotency_key);
 
-CREATE INDEX idx_idem_expires_at
-    ON idempotency_table (expires_at);
+CREATE INDEX idx_idempotency_expired_at
+    ON idempotency_table (expired_at);
+
+CREATE INDEX idx_idempotency_merchant_operation
+    ON idempotency_table (merchant_id, operation);
+
+CREATE INDEX idx_idempotency_status
+    ON idempotency_table (idempotency_status);

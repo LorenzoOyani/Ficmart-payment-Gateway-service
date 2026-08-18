@@ -16,7 +16,7 @@ import java.util.UUID;
 
 
 @Service
-    public class StripeWebhookProcessor {
+public class StripeWebhookProcessor {
 
         private final StripeWebhookRepository eventRepository;
         private final PaymentRepository paymentRepository;
@@ -125,7 +125,7 @@ import java.util.UUID;
             Payment payment = paymentRepository.findByStripePaymentIntentId(paymentIntentId)
                     .orElseThrow(() -> new IllegalStateException("Payment not found for PI " + paymentIntentId));
 
-            payment.markRefunded(refund.getId());
+            payment.markRefunded(UUID.fromString(paymentIntentId));
             paymentRepository.save(payment);
         }
     }

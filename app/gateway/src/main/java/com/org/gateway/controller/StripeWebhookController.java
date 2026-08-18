@@ -1,7 +1,6 @@
 package com.org.gateway.controller;
 
 import com.org.infrastructure.service.StripeWebhookCreationService;
-import com.org.persistence.repository.StripeWebhookRepository;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.net.Webhook;
@@ -15,10 +14,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/V1/webhooks/stripe")
 public class StripeWebhookController {
 
-    private final StripeWebhookRepository webhookRepository;
     private final StripeWebhookCreationService stripeWebhookCreationService;
 
-    @Value("${app.stripe.secret-key}")
+    @Value("${app.stripe.webhook-secret}")
     private String webhookSecret;
 
     @PostMapping
@@ -34,12 +32,11 @@ public class StripeWebhookController {
             return ResponseEntity.badRequest().body("Invalid Stripe signature");
         }
 
-        if (webhookRepository.existsByStripeEventId(event.getId())) {
-            return ResponseEntity.ok("Duplicate event ignored");
+        StripeWebhookCreationService.INGESTRESULT ingest = stripeWebhookCreationService.ingest(event, payload);
+
+        if (ingest == StripeWebhookCreationService.INGESTRESULT.DUPLICATE){
+            return ResponseEntity.badRequest().body("DUPLICATE EVENT");
         }
-
-
-        stripeWebhookCreationService.ingest(event, payload);
 
         return ResponseEntity.ok("Webhook received");
     }

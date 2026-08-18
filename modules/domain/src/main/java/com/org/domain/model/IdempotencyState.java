@@ -6,7 +6,7 @@ import lombok.Getter;
 public class IdempotencyState {
     private final boolean replay;
     private final boolean inProgress;
-   private final Object paymentResponse;
+    private final Object paymentResponse;
 
     public IdempotencyState(boolean replay, boolean inProgress, Object paymentResponse) {
         this.replay = replay;
@@ -24,7 +24,7 @@ public class IdempotencyState {
     }
 
     public IdempotencyState complete() {
-        return new IdempotencyState(false, true, paymentResponse);
+        return new IdempotencyState(false, false, paymentResponse);
     }
 
     public static IdempotencyState acquired() {

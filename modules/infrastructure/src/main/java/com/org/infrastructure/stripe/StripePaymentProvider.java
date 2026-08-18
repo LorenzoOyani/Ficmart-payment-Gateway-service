@@ -1,6 +1,8 @@
 package com.org.infrastructure.stripe;
 
-import com.org.application.dto.*;
+import com.org.application.dto.CancelCommand;
+import com.org.application.dto.CancelResponse;
+import com.org.application.dto.providerDTO.*;
 import com.org.application.ports.PaymentProvider;
 import com.org.domain.dto.PaymentAuthorizeResponse;
 import com.org.domain.dto.VoidResult;
@@ -10,6 +12,8 @@ import com.stripe.StripeClient;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.RefundCreateParams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +24,7 @@ import java.util.Map;
 @Component
 public class StripePaymentProvider implements PaymentProvider {
 
+    private final Logger log  = LoggerFactory.getLogger(StripePaymentProvider.class);
 
     private final StripeClient stripeClient;
 
@@ -33,7 +38,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
         try{
 
-            Map<String,  String> params = new HashMap<String, String>(cmd.metadata());
+            Map<String,  String> params = new HashMap<>(cmd.metadata());
             params.put("orderId", cmd.orderId());
             params.put("customerId", cmd.customerId());
 
@@ -45,12 +50,12 @@ public class StripePaymentProvider implements PaymentProvider {
                     .build();
 
             RequestOptions requestOptions = RequestOptions.builder()
-                    .setIdempotencyKey(cmd.idempotencyKey())
+                    .setIdempotencyKey("authorize" +cmd.idempotencyKey())
                     .build();
 
             PaymentIntent pi = stripeClient.v1().paymentIntents().create(intent, requestOptions);
 
-            Instant now = Instant.ofEpochSecond(cmd.instant().toEpochMilli());
+            Instant now = Instant.ofEpochSecond(pi.getCreated());
 
             return new PaymentAuthorizeResponse(
                     mapStatusToStripe(pi.getStatus()),
@@ -81,7 +86,6 @@ public class StripePaymentProvider implements PaymentProvider {
             RequestOptions requestOptions = RequestOptions.builder()
                     .setIdempotencyKey(cmd.idempotencyKey())
                     .build();
-
             PaymentIntent captured = intent.capture(requestOptions);
 
             return new ProviderCaptureResult(
@@ -96,7 +100,7 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public VoidResult voidAuth(ProviderVoidCommand cmd) {
+    public VoidResult voidPayment(ProviderVoidCommand cmd) {
         try{
             PaymentIntent pi = stripeClient.v1().paymentIntents().cancel(
                     cmd.providerAuthId()
@@ -125,16 +129,42 @@ public class StripePaymentProvider implements PaymentProvider {
                     cmd.providerAuthId(),
                     refund.getStatus(),
                     refund.getId()
-
             );
-
-
         } catch (Exception e) {
-            throw new StripeGatewayException("refund failure");
+            throw new RuntimeException(e);
+
         }
     }
 
+    @Override
+    public CancelResponse cancel(CancelCommand command) {
+        try {
+            PaymentIntent intent = stripeClient.v1().paymentIntents().cancel(
+                    command.paymentId(),
+                    RequestOptions.builder()
+                            .setIdempotencyKey("cancel:" + command.idempotencyKey())
+                            .build()
+            );
 
+            return new CancelResponse(
+                    intent.getId(),
+                    mapPaymentIntentStatus(intent.getStatus()),
+                    null
+            );
+        } catch (StripeException ex) {
+            log.error("Stripe cancel failed for paymentIntent={}", command.paymentId(), ex);
+            throw StripeGatewayException.from(ex);
+        }
+    }
 
-
+    private String mapPaymentIntentStatus(String status) {
+        return switch (status) {
+            case "requires_capture" -> "AUTHORIZED";
+            case "succeeded" -> "CAPTURED";
+            case "processing" -> "PROCESSING";
+            case "canceled" -> "CANCELLED";
+            case "requires_payment_method" -> "FAILED";
+            default -> "UNKNOWN";
+        };
+    }
 }

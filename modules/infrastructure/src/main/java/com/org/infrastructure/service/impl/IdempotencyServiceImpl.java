@@ -3,6 +3,7 @@ package com.org.infrastructure.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.org.application.dto.AuthorizeResponse;
+import com.org.application.dto.CancelResponse;
 import com.org.domain.dto.IdempotencyCommand;
 import com.org.domain.enums.IdempotencyStatus;
 import com.org.domain.exception.IdempotencyIdentityConflictException;
@@ -19,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
@@ -62,7 +62,7 @@ public class IdempotencyServiceImpl implements IdempotencyService {
                 return IdempotencyState.inProgress();
             }
 
-            return transactionTemplate.execute((TransactionCallback<IdempotencyState>) status -> {
+            return transactionTemplate.execute(status -> {
                 Optional<IdempotencyEntity> existingRec =
                         idempotencyRepository.findByIdempotencyKeyAndOperation(
                                 command.merchantId(),
@@ -86,7 +86,7 @@ public class IdempotencyServiceImpl implements IdempotencyService {
                     if (isStale(record)) {
                         record.markedFailed(
                                 409,
-                                "{\"error\":\"Stale in-progress idempotency record detected\"}"
+                                "{\"error\":\"Stale idempotency record detected\"}"
                         );
 
                         idempotencyRepository.save(
@@ -128,7 +128,7 @@ public class IdempotencyServiceImpl implements IdempotencyService {
     }
 
     @Override
-    public void complete(IdempotencyCommand command, AuthorizeResponse response) {
+    public <T> void complete(IdempotencyCommand command, T response) {
         transactionTemplate.executeWithoutResult(result -> {
             IdempotencyEntity entity = idempotencyRepository.findByIdempotencyKeyAndOperation(
                     command.merchantId(),
@@ -140,7 +140,7 @@ public class IdempotencyServiceImpl implements IdempotencyService {
 
             validateRequestHash(record, command);
 
-            record.markCompleted(200, serialize(response));
+            record.markCompleted(200, serialize((CancelResponse)response));
 
             idempotencyRepository.save(
                     idempotencyMapper.IdempotencyEntityMapper(record)
@@ -149,8 +149,8 @@ public class IdempotencyServiceImpl implements IdempotencyService {
     }
 
     @Override
-    public void fail(IdempotencyCommand command, AuthorizeResponse response) {
-        transactionTemplate.executeWithoutResult(result -> {
+    public <T> void fail(IdempotencyCommand command, T response) {
+                transactionTemplate.executeWithoutResult(result -> {
             IdempotencyEntity entity = idempotencyRepository.findByIdempotencyKeyAndOperation(
                     command.merchantId(),
                     command.key(),
@@ -161,12 +161,13 @@ public class IdempotencyServiceImpl implements IdempotencyService {
 
             validateRequestHash(record, command);
 
-            record.markedFailed(500, serialize(response));
+            record.markedFailed(500, serialize((AuthorizeResponse) response));
 
             idempotencyRepository.save(
                     idempotencyMapper.IdempotencyEntityMapper(record)
             );
         });
+
     }
 
     private void validateRequestHash(IdempotencyRecord record, IdempotencyCommand command) {
@@ -190,6 +191,15 @@ public class IdempotencyServiceImpl implements IdempotencyService {
     }
 
     private String serialize(AuthorizeResponse response) {
+        try {
+            return objectMapper.writeValueAsString(response);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("failed to serialize response", e);
+            throw new IllegalStateException("failed to serialize response", e);
+        }
+    }
+
+    private String serialize(CancelResponse response) {
         try {
             return objectMapper.writeValueAsString(response);
         } catch (JsonProcessingException e) {

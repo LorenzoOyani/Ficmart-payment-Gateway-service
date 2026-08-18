@@ -1,6 +1,4 @@
-package com.org.application.dto;
-
-import com.org.domain.dto.IdempotencyKey;
+package com.org.application.dto.providerDTO;
 
 import java.time.Instant;
 import java.util.Map;

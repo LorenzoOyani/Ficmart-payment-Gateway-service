@@ -1,10 +1,12 @@
 package com.org.infrastructure.configuration;
 
 import com.stripe.Stripe;
+import com.stripe.StripeClient;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 
@@ -24,5 +26,12 @@ public class StripeConfig {
     public void init(){
         Stripe.apiKey = properties.secretKey();
     }
+
+
+    @Bean
+    public StripeClient stripeClient() {
+        return new StripeClient(properties.secretKey());
+    }
+
 }
 

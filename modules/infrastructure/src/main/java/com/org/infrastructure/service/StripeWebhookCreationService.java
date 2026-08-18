@@ -8,6 +8,7 @@ import com.org.persistence.repository.OutboxEventRepository;
 import com.org.persistence.repository.StripeWebhookRepository;
 import com.stripe.model.Event;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,23 +27,50 @@ public class StripeWebhookCreationService {
         this.outboxFactory = outboxFactory;
     }
 
+    public enum INGESTRESULT{
+        CREATED,
+        DUPLICATE
+    }
+
     @Transactional
-    public void ingest(Event event, String rawPayload) {
-        if (webhookRepository.existsByStripeEventId(event.getId())) {
-            return;
+    public INGESTRESULT ingest(Event event, String rawPayload) {
+        validate(event, rawPayload);
+
+        try {
+            /// persist to db before queue
+            StripeWebhookEntity storedWebhook = webhookRepository.save(
+                    new StripeWebhookEntity(
+                            event.getId(),
+                            event.getType(),
+                            rawPayload
+                    )
+            );
+
+            OutboxEventEntity outboxEvent =
+                    outboxFactory.webhookEvent(storedWebhook.getId());
+
+
+            outboxRepository.save(outboxEvent);
+            return INGESTRESULT.CREATED;
+        } catch (DataIntegrityViolationException e) {
+           return INGESTRESULT.DUPLICATE;
+        }
+    }
+
+    private void validate(Event event, String rawPayload) {
+        if (event == null) {
+            throw new IllegalArgumentException("event cannot be null");
+        }
+        if (event.getId() == null || event.getId().isBlank()) {
+            throw new IllegalArgumentException("Stripe event id is required");
         }
 
-        StripeWebhookEntity storedWebhook = webhookRepository.save(
-                new StripeWebhookEntity(
-                        event.getId(),
-                        event.getType(),
-                        rawPayload
-                )
-        );
+        if (event.getType() == null || event.getType().isBlank()) {
+            throw new IllegalArgumentException("Stripe event type is required");
+        }
 
-        OutboxEventEntity outboxEvent =
-                outboxFactory.webhookEvent(storedWebhook.getId());
-
-        outboxRepository.save(outboxEvent);
+        if (rawPayload == null || rawPayload.isBlank()) {
+            throw new IllegalArgumentException("Stripe raw payload is required");
+        }
     }
 }
